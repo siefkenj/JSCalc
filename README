@@ -1,0 +1,16 @@
+JSCalc is a javascript-based mathematical parser and calculator. 
+It allows one to type math naturally and have it do the right thing.
+
+==Features==
+ * Implicit multiplication: '4pi' is recognized as '4*pi'
+ * Prefix, infix, and suffix operations: 'sin(4)', '4^4', '4!'
+ * Bracket agnostic: use '()', '{}', or '[]' to group expressions.  They can be mixed aswell!
+ * Order of operations respected (If it weren't, it'd be a pretty bad calculator)
+
+==Requirements==
+Javascript 1.8. (For example, FireFox 4 > or gnome-javascript)
+
+Why?
+
+New javascript builtins like 'let', destructured assignments, etc. are just 
+too painful to work without.
