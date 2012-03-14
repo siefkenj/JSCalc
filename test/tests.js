@@ -39,7 +39,7 @@ module("Lexer Tests", {
     }
 });
 
-test("Parsing", function() {
+test("Lexer Tests", function() {
     tokenEqual(new Token('number', '4'), knownTokens.FOUR);
     
     let tokens = tokenize('4*4');
@@ -127,7 +127,7 @@ module("Parser Tests", {
         }
     }
 });
-test("Sample test", function() {
+test("Parser Tests", function() {
     astEqual(new Node(knownTokens.FOUR.value, knownTokens.FOUR, []), 
              new Node(knownTokens.FOUR.value, knownTokens.FOUR, []));
     astEqual(listToAST(['+', ['*', 3, 3] ,4]), listToAST(['+', ['*', 3, 3] ,4]), 'Test astEqual test function');
@@ -146,4 +146,30 @@ test("Sample test", function() {
     deepEqual(astToList(parse('4 pi/5')), ['/', ['*', 4, 'pi'], 5], 'implicit multiplication');
 });
 
+});
+
+module("BigNumber Tests")
+test("BigNumber Tests", function() {
+    equal((new BigNatural('123')).toString(), '123', 'Initialization from string');
+    equal((new BigNatural(123)).toString(), '123', 'Initialization from number');
+    equal((new BigNatural('12357943984829578409202939488572983894578435')).toString(), '12357943984829578409202939488572983894578435', 'Initialization from string');
+    equal((new BigNatural('0')).eq(new BigNatural(0)), true, 'Comparison of zero');
+    equal((new BigNatural('0')).eq(new BigNatural([0])), true, 'Comparison of zero');
+    equal((new BigNatural(0)).eq(new BigNatural([0])), true, 'Comparison of zero');
+    let x = new BigNatural('12357943984829578409202939488572983894578435');
+    let y = new BigNatural('988989189432675462789392012938888888888881470');
+    let z = new BigNatural('17');
+    equal(x.add(y).toString(), '1001347133417505041198594952427461872783459905', 'Add');
+    equal(y.add(x).toString(), '1001347133417505041198594952427461872783459905', 'Add');
+    equal(y.sub(x).toString(), '976631245447845884380189073450315904994303035', 'Subtract');
+    equal(y.mul(x).toString(), '12221873004611012186891046368657631678605694331581707602856984633007678192429484333099450', 'Multiply');
+    equal(x.mul(y).toString(), '12221873004611012186891046368657631678605694331581707602856984633007678192429484333099450', 'Multiply');
+    equal(y.mod(x).toString(), '353670646309190053156853853050177322606670', 'Mod');
+    equal(y.mod(new BigNatural(17)).toString(), '9', 'GCD');
+    let [dividand, remainder] = y.divideWithRemainder(x);
+    equal(dividand.toString(), '80', 'Division')
+    equal(remainder.toString(), '353670646309190053156853853050177322606670', 'Division remainder')
+    let [dividand, remainder] = y.divideWithRemainder(z);
+    equal(dividand.toString(), '58175834672510321340552471349346405228757733', 'Division')
+    equal(remainder.toString(), '9', 'Division remainder')
 });

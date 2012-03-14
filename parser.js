@@ -1,6 +1,30 @@
-const OPERATORS = { infix: { '+': 1, '-': 1, '*': 2, '/': 2, '^': 4, '=': 0, '==': 0, '<': 0, '<=': 0, '>': 0, '>=': 0, '!=': 0, 'default': 1},
+/*
+ *   Parser for math expressions
+ *
+ *   Copyright (C) 2012  Jason Siefken
+ *
+ *   This program is free software: you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation, either version 3 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+
+
+const OPERATORS = { infix: { '+': 1, '-': 1, '*': 2, '/': 2, '^': 4, 
+                             '=': 0, '==': 0, '<': 0, '<=': 0, '>': 0, 
+                             '>=': 0, '!=': 0, ',': -1 /* a comma expression should always be enclosed in brackets, so commas are safe having the lowest precidencce level */,
+                             'default': 1},
                     prefix: { '-': 2, '+': 2, 'negate': 2, 'default': 2 },
-                    suffix: { '!': 3, 'default': 2 },
+                    suffix: { '!': 3, 'deg': 1, 'default': 2 },
                     rightAssociative: { '^': true, '=': true } };
 const CONSTANTS = { 'pi': true, 'e': true, 'phi': true };
 
@@ -38,7 +62,6 @@ function greaterPrecidence(op1, op2) {
 function Node() {
     this._init.apply(this, arguments);
 }
-
 Node.prototype = {
     _init: function(type, token, children) {
         this.type = type;

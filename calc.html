@@ -9,6 +9,7 @@
 	<script type="text/javascript;version=1.8" src="parser.js"></script>
 	<script type='application/javascript' src='jquery/jquery-1.6.4.js'></script>
 	<script type="text/javascript;version=1.8" src="calculator.js"></script>
+	<script type="text/javascript;version=1.8" src="bignum.js"></script>
 
 	<script type="text/javascript;version=1.8">
 		$(document).ready(function() {
@@ -18,7 +19,7 @@
 				let p = new Parser(text);
 				let parsed = p.parse();
 				$('#parsed-data').text(''+parsed);
-				let answer = evaluate(parsed);
+				let answer = evaluateNumeric(parsed);
 				$('#eval-data').text(''+answer);
 				$('#symeval-data').text(''+evaluateString(parsed));
 
