@@ -9,6 +9,8 @@ To start using JSCalc, open `calc.html` in a web browser.
  * Prefix, infix, and suffix operations: 'sin(4)', '4^4', '4!'
  * Bracket agnostic: use '()', '{}', or '[]' to group expressions.  They can be mixed aswell!
  * Order of operations respected (If it weren't, it'd be a pretty bad calculator)
+ * RPN parsing (with Parse.parseRPN)
+ * Scientific notation number input (e.g., '1.23e-10')
 
 === Requirements ===
 

@@ -48,6 +48,18 @@ test("Lexer Tests", function() {
     tokenArrayEqual(tokens, [knownTokens.FOUR, knownTokens.TIMES, knownTokens.FOUR]);
     let tokens = tokenize(' [4 *  \t4');
     tokenArrayEqual(tokens, [knownTokens.LEFT_SQUARE_BRACKET, knownTokens.FOUR, knownTokens.TIMES, knownTokens.FOUR]);
+    let tokens = tokenize('4.4');
+    equal(tokens[0].value, 4.4, 'Float paring parsing')
+    let tokens = tokenize('4.4e3');
+    equal(tokens[0].value, 4400, 'Float paring parsing')
+    let tokens = tokenize('4.4e+3');
+    equal(tokens[0].value, 4400, 'Float paring parsing')
+    let tokens = tokenize('4.4e-3');
+    equal(tokens[0].value, 4.4e-3, 'Float paring parsing')
+    let tokens = tokenize('4.4E-3');
+    equal(tokens[0].value, 4.4e-3, 'Float paring parsing')
+    let tokens = tokenize('4.4e3e3');
+    equal(tokens[0].value, 4.4e3, 'Float paring parsing')
 });
 
 

@@ -7,7 +7,7 @@
  *   it under the terms of the GNU General Public License as published by
  *   the Free Software Foundation, either version 3 of the License, or
  *   (at your option) any later version.
-
+ *
  *   This program is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -140,15 +140,23 @@ Lexer.prototype = {
     getNumber: function(pos, source) {
         let currPos = pos || this.index || 0;
         let currSource = source || this.source;
-        
-        let start = currPos;
-        let c = currSource.charAt(currPos);
-        while (isDecimalDigit(c) || c === '.') {
-            currPos++;
-            c = currSource.charAt(currPos);
-        }
 
-        return currSource.slice(start, currPos) || null;
+        // Match numbers, including numbers in scientific notation using
+        // 1.234E10 format.
+        let match = currSource.slice(currPos).match(/^(\d+\.?\d*|\d*\.?\d+)(([eE][+-]?)?\d+)?/);
+        if (match) {
+            return match[0];
+        }
+        return null;
+        
+//        let start = currPos;
+//        let c = currSource.charAt(currPos);
+//        while (isDecimalDigit(c) || c === '.') {
+//            currPos++;
+//            c = currSource.charAt(currPos);
+//        }
+//
+//        return currSource.slice(start, currPos) || null;
     },
     
     // TODO: make so identifiers can be followed by numbers?
