@@ -18,6 +18,7 @@
 				$('#code').text(text);
 				let p = new Parser(text);
 				let parsed = p.parse();
+				//let parsed = p.parseRPN();
 				$('#parsed-data').text(''+parsed);
 				let answer = evaluateNumeric(parsed);
 				$('#eval-data').text(''+answer);

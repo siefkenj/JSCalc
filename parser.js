@@ -18,13 +18,15 @@
  */
 
 
-
+// This is a list of all operators and their precidence.  If an
+// operator does not show up on this list, it is assumed to be a prefix
+// operator with precidence prefix['default'].
 const OPERATORS = { infix: { '+': 1, '-': 1, '*': 2, '/': 2, '^': 4, 
                              '=': 0, '==': 0, '<': 0, '<=': 0, '>': 0, 
                              '>=': 0, '!=': 0, ',': -1 /* a comma expression should always be enclosed in brackets, so commas are safe having the lowest precidencce level */,
                              'default': 1},
-                    prefix: { '-': 2, '+': 2, 'negate': 2, 'default': 2 },
-                    suffix: { '!': 3, 'deg': 1, 'default': 2 },
+                    prefix: { '-': 2, 'negate': 2, 'default': 2 },
+                    suffix: { '!': 3, 'deg': 3, 'default': 2 },
                     rightAssociative: { '^': true, '=': true } };
 const CONSTANTS = { 'pi': true, 'e': true, 'phi': true };
 
@@ -59,6 +61,7 @@ function greaterPrecidence(op1, op2) {
 }
 
 
+// Basic node type for representing an AST
 function Node() {
     this._init.apply(this, arguments);
 }
@@ -80,16 +83,20 @@ Node.prototype = {
     }
 }
 
+// Main parser object. This is what you want to hand your math string
+// off to.
 function Parser() {
     this._init.apply(this, arguments);
 }
-
 Parser.prototype = {
     _init: function(source) {
         this.source = source;
         this.tokens = [];
     },
 
+    // Returns a list of tokens.  All identifier tokens are 
+    // turned into either operators or numbers depending on whether
+    // they are in the CONSTANTS object.
     tokenize: function(source) {
         source = source || this.source || '';
         let lexer = new Lexer(source);
@@ -112,8 +119,38 @@ Parser.prototype = {
         return tokens;
     },
 
-    parse: function() {
-        let tokens = this.tokenize();
+    // Computes an AST from RPN source. All infix operators are assume
+    // to be binary and all other operators are assumed to be unary.
+    // An explicit list of the arity of each operator could be kept,
+    // but it seems that atan2 would be the only exception. . ..
+    parseRPN: function(source) {
+        let tokens = this.tokenize(source);
+
+        let argumentList = [];
+        while (tokens.length > 0) {
+            let token = tokens.shift();
+            if (token.type === 'operator') {
+                let children, node;
+                // Decide if the operator is binary or unary
+                if (token.value in OPERATORS.infix) {
+                    // Binary, so peel off the last two arguments
+                    children = argumentList.splice(-2, 2);
+                } else {
+                    children = argumentList.splice(-1, 1);    
+                }
+                node = new Node('operator', token, children);
+                argumentList.push(node)
+            } else {
+                argumentList.push(token);
+            }
+        }
+
+        return argumentList;
+    },
+
+    // Returns an AST made by parsing source (or this.source if source is undefined)
+    parse: function(source) {
+        let tokens = this.tokenize(source);
         // Match up all sets of parenthesis first
         tokens = this.computeBracketTree(tokens);
         // We allow implicit multiplication, like '4pi'=='4*pi'.  
@@ -186,7 +223,7 @@ Parser.prototype = {
         return movePrefix(deepcopy(tokens));
     },
     
-    // Turns a string of tokens into an abstract syntax tree
+    // Turns a list of tokens into an abstract syntax tree
     computeASTForm: function(tokens) {
         function treeize(tokens, operator) {
             let ret = [];
