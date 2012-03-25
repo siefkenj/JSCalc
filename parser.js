@@ -21,14 +21,14 @@
 // This is a list of all operators and their precidence.  If an
 // operator does not show up on this list, it is assumed to be a prefix
 // operator with precidence prefix['default'].
-const OPERATORS = { infix: { '+': 1, '-': 1, '*': 2, '/': 2, '^': 4, 
+const OPERATORS = { infix: { '+': 1, '-': 1, '*': 2, '/': 2, '//': 2, '^': 4, '%': 1,
                              '=': 0, '==': 0, '<': 0, '<=': 0, '>': 0, 
                              '>=': 0, '!=': 0, ',': -1 /* a comma expression should always be enclosed in brackets, so commas are safe having the lowest precidencce level */,
                              'default': 1},
                     prefix: { '-': 2, 'negate': 2, 'default': 2 },
                     suffix: { '!': 3, 'deg': 3, 'default': 2 },
                     rightAssociative: { '^': true, '=': true } };
-const CONSTANTS = { 'pi': true, 'e': true, 'phi': true };
+const CONSTANTS = { 'pi': true, 'e': true, 'phi': true, 'i': true, 'I': true };
 
 
 function deepcopy(array) {

@@ -1,6 +1,6 @@
 <html>
 <head>
-<title>Calculator!</title>
+<title>JSCalc Calculator!</title>
 <link href="linter.css" rel="stylesheet" type="text/css" />
 </head>
 
@@ -8,19 +8,25 @@
 	<script type="text/javascript;version=1.8" src="lexer.js"></script>
 	<script type="text/javascript;version=1.8" src="parser.js"></script>
 	<script type='application/javascript' src='jquery/jquery-1.6.4.js'></script>
-	<script type="text/javascript;version=1.8" src="calculator.js"></script>
 	<script type="text/javascript;version=1.8" src="bignum.js"></script>
+	<script type="text/javascript;version=1.8" src="calculator.js"></script>
 
 	<script type="text/javascript;version=1.8">
 		$(document).ready(function() {
 			$('#expression').change(function() {
+				let inputType = $('#input_type option:selected').val();
 				let text = $('#expression').val();
 				$('#code').text(text);
-				let p = new Parser(text);
-				let parsed = p.parse();
-				//let parsed = p.parseRPN();
+				
+				let p = new Parser(text), parsed;
+				if (inputType === 'standard') {
+					parsed = p.parse();
+				} else if (inputType === 'rpn') {
+					parsed = p.parseRPN();
+				}
 				$('#parsed-data').text(''+parsed);
-				let answer = evaluateNumeric(parsed);
+				//let answer = evaluateNumeric(parsed);
+				let answer = evaluateComplexNumeric(parsed);
 				$('#eval-data').text(''+answer);
 				$('#symeval-data').text(''+evaluateString(parsed));
 
@@ -29,8 +35,12 @@
 	</script>
 
 
-
-<input id='expression' type='text' />
+<h4>Type in a math expression and then hit return.</h4>
+<input id='expression' type='text' /> 
+<select id='input_type'>
+	<option value='standard'>Standard Input</option>
+	<option value='rpn'>RPN Input</option>
+</select>
 
 <h3>Input:</h3>
 <pre><div id='code'></div></pre>
@@ -38,7 +48,7 @@
 <pre><div id='parsed-data'></div></pre>
 <h3>Symbolic Eval:</h3>
 <pre><div id='symeval-data'></div></pre>
-<h3>Evaluated Result</h3>
+<h3>Evaluated Result:</h3>
 <pre><div id='eval-data'></div></pre>
 
 <br />

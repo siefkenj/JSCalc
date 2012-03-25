@@ -39,14 +39,17 @@ function EvaluationError(message) {
 // Evaluator takes in a Node tree and recursively applies 
 // itself, first looking for functions in functionList and then
 // falling back to defaultFunction if those are unavailable.
+// When evaluating a number, numberWrapper(x) is returned.  This
+// can be used to coarse types during evaluation.
 function Evaluator() {
     this._init.apply(this, arguments);
 }
 Evaluator.prototype = {
-    _init: function(constantsList, functionList, defaultFunction) {
+    _init: function(constantsList, functionList, defaultFunction, numberWrapper) {
         this.constantsList = constantsList || {};
         this.functionList = functionList || {};
-        this.defaultFunction = defaultFunction || function(name, args) { throw new EvaluationError('Unknown function "'+name+'"'); };
+        this.defaultFunction = defaultFunction || function(name, args){ throw new EvaluationError('Unknown function "'+name+'"'); };
+        this.numberWrapper = numberWrapper || function(x){ return x; };
     },
 
     evaluate: function(ast) {
@@ -62,7 +65,7 @@ Evaluator.prototype = {
         } else if (ast.constant === true) {
             return this.constantsList[ast.value];
         }
-        return ast.value;
+        return this.numberWrapper(ast.value);
     },
     
     // returns a function that when called, evaluates the ast.
@@ -78,9 +81,9 @@ Evaluator.prototype = {
  * returns a string representation of the AST
  * ***********************************************/
 
-let evaluateNumeric, evaluateString, evaluateRPNString;
+let evaluateNumeric, evaluateComplexNumeric, evaluateString, evaluateRPNString;
 (function() {
-    let constantsList, functionList, defaultFunction, evaluator;
+    let constantsList, functionList, defaultFunction, numberWrapper, evaluator;
     // Some general purpose math functions
     function sum(array) {
         if (typeof array === 'number') {
@@ -178,6 +181,8 @@ let evaluateNumeric, evaluateString, evaluateRPNString;
                     '-': function(a,b){ return a-b; },
                     '*': function(a,b){ return a*b; },
                     '/': function(a,b){ return a/b; },
+                    '%': function(a,b){ return (a%b + b)%b; },
+                    'mod': function(a,b){ return (a%b + b)%b; },
                     'negate': function(a){ return -a; },
                     '!': function(a) { if (a > 170) {return Infinity;} ret = 1; for (let i = 1; i <= a; i++) {ret *= i;} return ret; },
                     '>': function(a,b) { return a > b; },
@@ -194,13 +199,67 @@ let evaluateNumeric, evaluateString, evaluateRPNString;
                    };
     evaluator = new Evaluator(constantsList, functionList);
     evaluateNumeric = evaluator.makeEvaluator();    //evaluateNumeric is brought in by closure
+    
+    //
+    // An evaluator that uses the Complex type and javascript builtin arithmetic
+    // to evaluate expressions allowing for a complex result.
+    //
+
+    // Set up the constants and functions for evaluateNumeric
+    constantsList = { 'pi': new Complex(Math.PI, 0), 
+                      'e': new Complex(Math.E, 0), 
+                      'phi': new Complex((1+Math.sqrt(5))/2, 0), 
+                      'i': new Complex(0, 1), 
+                      'I': new Complex(0, 1) };
+    functionList = {
+                    're': ComplexMath.re, 'real': ComplexMath.re,
+                    'im': ComplexMath.im, 'imag': ComplexMath.im,
+                    'arg': ComplexMath.arg, 'Arg': ComplexMath.arg,
+                    'sin': ComplexMath.sin, 'cos': ComplexMath.cos, 'tan': ComplexMath.tan,
+                    'asin': ComplexMath.asin, 'acos': ComplexMath.acos, 'atan': ComplexMath.atan,
+                    'arcsin': ComplexMath.asin, 'arccos': ComplexMath.acos, 'arctan': ComplexMath.atan,
+                    'atan2': ComplexMath.atan2,
+                    'sec': ComplexMath.sec, 'csc': ComplexMath.csc, 'cot': ComplexMath.cot,
+                    'sinh': ComplexMath.sinh, 'cosh': ComplexMath.cosh, 'tanh': ComplexMath.tanh,
+                    'asinh': ComplexMath.asinh, 'acosh': ComplexMath.acosh, 'atanh': ComplexMath.atanh,
+                    'arcsinh': ComplexMath.asinh, 'arccosh': ComplexMath.acosh, 'arctanh': ComplexMath.atanh,
+                    'deg': function(x) { return x.mul(new Complex(Math.PI/180, 0)); },
+                    '^': ComplexMath.pow, 'exp': ComplexMath.exp, 
+                    'ln': ComplexMath.log, 
+                    'log': ComplexMath.log, 
+                    'abs': ComplexMath.norm,
+                    'sqrt': ComplexMath.sqrt,
+                    'ceil': ComplexMath.ceil,
+                    'floor': ComplexMath.floor,
+                    'round': ComplexMath.round,
+                    '+': ComplexMath.add,
+                    '-': ComplexMath.sub,
+                    '*': ComplexMath.mul,
+                    '/': ComplexMath.div,
+                    '//': function(a,b){ return ComplexMath.floor(ComplexMath.div(a,b)); },
+                    'negate': ComplexMath.negate,
+                    '%': ComplexMath.mod,
+                    'mod': ComplexMath.mod,
+                    '!': ComplexMath.factorial,
+                    '==': ComplexMath.equal,
+                    '>': ComplexMath.gt, '<': ComplexMath.lt, '<=': ComplexMath.lte, '>=': ComplexMath.gte,
+                    ',': comma,
+//                    'mean': mean,
+//                    'ave': mean,
+//                    'var': variance,
+//                    'variance': variance,
+//                    'std': std
+                   };
+    numberWrapper = function(x){ return new Complex(x, 0); };
+    evaluator = new Evaluator(constantsList, functionList, null, numberWrapper);
+    evaluateComplexNumeric = evaluator.makeEvaluator();    //evaluateNumeric is brought in by closure
 
     //
     // An evaluator that returns a string representation of the math expression
     //
 
     // Should be { 'pi': 'π', 'e': 'e', 'phi': 'φ' } but javascript has unicode problems
-    constantsList = { 'pi': '\u03C0', 'e': 'e', 'phi': '\u03C6' };
+    constantsList = { 'pi': '\u03C0', 'e': 'e', 'phi': '\u03C6', 'i': 'i', 'I': 'i' };
     functionList = {
                     'sin': function(a){ return 'sin('+a+')'; },
                     'cos': function(a){ return 'cos('+a+')'; },
@@ -218,9 +277,11 @@ let evaluateNumeric, evaluateString, evaluateRPNString;
                     '-': function(a,b){ return '('+a+'-'+b+')'; },
                     '*': function(a,b){ return '('+a+'*'+b+')'; },
                     '/': function(a,b){ return '('+a+'/'+b+')'; },
+                    '//': function(a,b){ return '('+a+'//'+b+')'; },
                     'negate': function(a){ return '-(' + a +')'; },
                     '!': function(a) { return ''+a+'!'; },
-                    ',': comma
+                    ',': comma,
+                    '%': function(a,b){ return '('+a+' mod '+b+')'; },
                    };
     defaultFunction = function(name, args) { return name + '(' + args + ')'; };
 

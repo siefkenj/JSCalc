@@ -11,6 +11,7 @@ To start using JSCalc, open `calc.html` in a web browser.
  * Order of operations respected (If it weren't, it'd be a pretty bad calculator)
  * RPN parsing (with Parse.parseRPN)
  * Scientific notation number input (e.g., '1.23e-10')
+ * Complex arithmetic using evaluateComplexNumeric
 
 === Requirements ===
 

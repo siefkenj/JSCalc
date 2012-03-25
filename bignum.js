@@ -64,6 +64,8 @@ BigNatural.prototype = {
         }
     },
 
+    constructor: BigNatural,
+
     toString: function() {
         // ensures a chunk is formatted with the appropriate number of
         // leading zeros
@@ -172,18 +174,18 @@ BigNatural.prototype = {
         for (let i = n - 1; i >= 0; i--) {
             ret[i] = 0;
         }
-        return new BigNatural(ret.concat(this.nums));
+        return new this.constructor(ret.concat(this.nums));
     },
     
     add: function(other) {
-        return new BigNatural(this._sumArraysWithCarry(this.nums, other.nums));
+        return new this.constructor(this._sumArraysWithCarry(this.nums, other.nums));
     },
 
     // This function assumes that this >= other.  If this assumption is not  met, it will
     // return bogus answers!
     sub: function(other) {
         let complement = this._arrayPAdicCompliment, sum = this._sumArraysWithCarry;
-        return new BigNatural(complement(sum(complement(this.nums), other.nums)));
+        return new this.constructor(complement(sum(complement(this.nums), other.nums)));
     },
 
     mul: function(other) {
@@ -191,7 +193,7 @@ BigNatural.prototype = {
         function getElm(array, elm) {
             return typeof array[elm] === 'undefined' ? 0 : array[elm];
         }
-        let ret = new BigNatural(0);
+        let ret = new this.constructor(0);
         for (let digit = 0; digit < other.nums.length; digit++){
             let currArray = [];
             let carry = 0;
@@ -202,25 +204,25 @@ BigNatural.prototype = {
                 currArray.push(chunk);
             }
             currArray.push(carry);
-            ret = ret.add((new BigNatural(currArray)).shift(digit));
+            ret = ret.add((new this.constructor(currArray)).shift(digit));
         }
 
         return ret;
     },
 
     mod: function(other) {
-        if (other.eq(new BigNatural(0))) {
-            return new BigNatural(0);
+        if (other.eq(new this.constructor(0))) {
+            return new this.constructor(0);
         }
 
         // We can be a little bit efficient.  If the number we mod out by is
         // way, way bigger than us, first mod out by a multiple
-        let ret = new BigNatural(this);
+        let ret = new this.constructor(this);
         if (this.nums.length >= other.nums.length + 2) {
             ret = ret.mod(other.shift(1));
         }
         while (ret.gte(other)) {
-            ret = new BigNatural(ret.sub(other));
+            ret = new this.constructor(ret.sub(other));
         }
 
         return ret;
@@ -243,7 +245,7 @@ BigNatural.prototype = {
     // returns [dividand, remainder] such that dividand*other + remainder == this
     divideWithRemainder: function(other) {
         let [dividand, remainder] = this._arrayDivideWithRemainder(this.nums, other.nums);
-        return [new BigNatural(dividand), new BigNatural(remainder)];
+        return [new this.constructor(dividand), new this.constructor(remainder)];
     },
     
     // Does rich comparison.  I.e., this>other returns 1, this==other returns 0, this<other returns -1
@@ -313,6 +315,8 @@ BigInt.prototype = {
         this.num = new BigNatural(num);
     },
 
+    constructor: BigInt,
+
     toString: function() {
         let sign = this.sign === 1 ? '' : '-';
         return sign + this.num;
@@ -320,19 +324,19 @@ BigInt.prototype = {
     
     // returns negative of itself
     negate: function() {
-        return new BigInt(this.num, -this.sign);
+        return new this.constructor(this.num, -this.sign);
     },
 
     // returns the absolute value of itself
     abs: function() {
-        return new BigInt(this.num, 1);
+        return new this.constructor(this.num, 1);
     },
 
     add: function(other) {
         let sign;
         if (this.sign === other.sign) {
             sign = this.sign;
-            return new BigInt(this.num.add(other.num), sign);
+            return new this.constructor(this.num.add(other.num), sign);
         } else {
             // Use the method of complementation to add a negative and a positive
             let bigger, smaller;
@@ -347,13 +351,13 @@ BigInt.prototype = {
             }
             let sum = bigger.sub(smaller);
             // If we are the bigger number in absolute value, the sign we have at the end is the our sign
-            return new BigInt(sum, sign);
+            return new this.constructor(sum, sign);
         }
     },
 
     mul: function(other) {
         let sign = this.sign * other.sign;
-        return new BigInt(this.num.mul(other.num), sign);
+        return new this.constructor(this.num.mul(other.num), sign);
     },
 
     div: function(other) {
@@ -377,7 +381,7 @@ BigInt.prototype = {
         
         this.sign * other.sign;
         let [dividand, remainder] = this.num.divideWithRemainder(other.num);
-        return [new BigInt(dividand, dividandSign), new BigInt(remainder, remainderSign)];
+        return [new this.constructor(dividand, dividandSign), new this.constructor(remainder, remainderSign)];
     },
 
     gcd: function(other) {
@@ -410,6 +414,8 @@ BigInt.prototype = {
 }
 
 
+const COMPLEX_PERCISION = 10e10;
+// Class for complex numbers using javascript internal arithmetic.
 function Complex() {
     this._init.apply(this, arguments);
 }
@@ -420,12 +426,67 @@ Complex.prototype = {
         this.im = im;
     },
 
+    constructor: Complex,
+
     toString: function() {
-        return this.re.toFixed(5) + ' ' + this.im.toFixed(5) +'i';
+        function imToString(x) {
+            if (x === 1) {
+                return 'i';
+            } else if (x === -1) {
+                return '-i';
+            }
+            return x+'i';
+        }
+        
+        // Check if we are NaN
+        if (isNaN(this.re) && isNaN(this.im)) {
+            return 'NaN';
+        }
+
+        // Round to 10 digits
+        let re = Math.round(this.re*COMPLEX_PERCISION)/COMPLEX_PERCISION, im = Math.round(this.im*COMPLEX_PERCISION)/COMPLEX_PERCISION;
+        if (re === 0 && im === 0) {
+            return '0';
+        } else if (im === 0) {
+            return ''+re;
+        } else if (re === 0) {
+            return imToString(im);
+        }
+        if (im < 0) {
+            return re+' - '+imToString(Math.abs(im));
+        } else {
+            return re+' + '+imToString(im);
+        }
+    },
+
+    isReal: function(a) {
+        a = a || this;
+        if (Math.abs(a.im) < 1/COMPLEX_PERCISION) {
+            return true;
+        }
+        return false;
+    },
+
+    isImaginary: function(a) {
+        a = a || this;
+        if (Math.abs(a.re) < 1/COMPLEX_PERCISION) {
+            return true;
+        }
+        return false;
+    },
+
+    eq: function(other) {
+        let re = Math.round(this.re*COMPLEX_PERCISION)/COMPLEX_PERCISION, im = Math.round(this.im*COMPLEX_PERCISION)/COMPLEX_PERCISION;
+        let otherRe = Math.round(other.re*COMPLEX_PERCISION)/COMPLEX_PERCISION, otherIm = Math.round(other.im*COMPLEX_PERCISION)/COMPLEX_PERCISION;
+        return re === otherRe && im === otherIm;
     },
 
     add: function(other) {
         return new Complex(this.re + other.re, this.im + other.im);
+    },
+    
+    sub: function(other) {
+        return new Complex(this.re - other.re, this.im - other.im);
     },
 
     mul: function(other) {
@@ -433,6 +494,14 @@ Complex.prototype = {
         let a = this.re, b = this.im;
         let c = other.re, d = other.im;
         return new Complex(a*c-b*d, a*d+b*c);
+    },
+
+    div: function(other) {
+        let a = this.re, b = this.im;
+        let c = other.re, d = other.im;
+        
+        let denom = c*c + d*d;
+        return new Complex((a*c+b*d)/denom, (b*c-a*d)/denom);
     },
 
     conj: function() {
@@ -444,27 +513,266 @@ Complex.prototype = {
     },
 
     arg: function() {
-        return Math.atan2(this.im, this.re);
+        let ret = Math.atan2(this.im, this.re);
+        // Math.atan2(-0, 1) == -pi, but we want Math.atan2(-0,1) == Math.atan2(0,1) !!
+        return ret == -Math.PI ? Math.PI : ret;
     }
 }
 
 ComplexMath = {
+    i: new Complex(0, 1),
+    minusI: new Complex(0, -1),
+    iOverTwo: new Complex(0, 1/2),
+    one: new Complex(1, 0),
+    minusOne: new Complex(-1, 0),
+    pi: new Complex(Math.PI, 0),
+
+    equal: function(a, b) {
+        return a.eq(b);
+    },
+
+    gt: function(a, b) {
+        return (a.norm()-b.norm()) > 1/COMPLEX_PERCISION;
+    },
+    
+    lt: function(a, b) {
+        return (a.norm()-b.norm()) < -1/COMPLEX_PERCISION;
+    },
+    
+    gte: function(a, b) {
+        return ComplexMath.equal(a, b) || ComplexMath.gt(a, b);
+    },
+    
+    lte: function(a, b) {
+        return ComplexMath.equal(a, b) || ComplexMath.lt(a, b);
+    },
+
+    re: function(z) {
+        return new Complex(z.re, 0);
+    },
+    
+    im: function(z) {
+        return new Complex(z.im, 0);
+    },
+
+    arg: function(z) {
+        return new Complex(z.arg(), 0);
+    },
+    
+    norm: function(z) {
+        return new Complex(z.norm(), 0);
+    },
+
     fromPolar: function(mag, arg) {
         let a = mag*Math.cos(arg), b = mag*Math.sin(arg);
         return new Complex(a,b);
     },
 
-    sqrt: function(c) {
-        let mag = c.norm(), arg = c.arg();
-        console.log(mag,arg)
+    floor: function(z) {
+        return new Complex(Math.floor(z.re), Math.floor(z.im));
+    },
+    
+    ceil: function(z) {
+        return new Complex(Math.ceil(z.re), Math.ceil(z.im));
+    },
+    
+    round: function(z) {
+        return new Complex(Math.round(z.re), Math.round(z.im));
+    },
+
+    // If the real part or imaginary part of b is zero, mod
+    // treats a,b as purely real or purely imaginary.
+    mod: function(a,b) {
+        if (a instanceof Array) {
+            b = a[1];
+            a = a[0];
+        }
+        let re = ((a.re % b.re) + b.re) % b.re;
+        let im = ((a.im % b.im) + b.im) % b.im;
+
+        if (isNaN(re) && isNaN(im)) {
+            return new Complex(NaN, NaN);
+        } else if (isNaN(re)) {
+            return new Complex(0, im);
+        } else if (isNaN(im)) {
+            return new Complex(re, 0);
+        }
+        return new Complex(re, im);
+    },
+
+    conj: function(z) {
+        return z.conj();
+    },
+
+    negate: function(z) {
+        return new Complex(-z.re, -z.im)
+    },
+
+    sqrt: function(z) {
+        let mag = z.norm(), arg = z.arg();
         return ComplexMath.fromPolar(Math.sqrt(mag), arg/2);
     },
 
     add: function(a, b) {
         return a.add(b);
     },
+    
+    sub: function(a, b) {
+        return a.sub(b);
+    },
 
     mul: function(a, b) {
         return a.mul(b);
-    }
+    },
+
+    div: function(a, b) {
+        return a.div(b);
+    },
+
+    log: function(z) {
+        let mag = z.norm(), arg = z.arg();
+        return new Complex(Math.log(mag), arg);
+    },
+
+    exp: function(z) {
+        let mag = z.norm(), arg = z.arg();
+        let cos = Math.cos(arg), sin = Math.sin(arg);
+
+        return ComplexMath.fromPolar(Math.exp(mag*cos), mag*sin);
+    },
+
+    pow: function(a, b) {
+        return ComplexMath.exp(ComplexMath.mul(ComplexMath.log(a), b));
+    },
+
+    factorial: function(z) {
+        if (!z.isReal() || z.re < -1/COMPLEX_PERCISION) {
+            return new Complex(NaN, NaN);
+        }
+        x = z.re;
+        // 170! overflows javascript's float
+        if (x > 170) {
+            return new Complex(Infinity, 0);
+        }
+        let accum = 1;
+        while (x > 1) {
+            accum = accum*x;
+            x = x-1;
+        }
+        return new Complex(accum, 0);
+    },
+
+    sin: function(z) {
+        // sin(c) = (e^(ic)-e^(-ic))/(2i)
+        const twoI = new Complex(0, 2);
+        return ComplexMath.div(
+                ComplexMath.sub(
+                 ComplexMath.exp(
+                  ComplexMath.mul(ComplexMath.i, z)
+                 ), ComplexMath.exp(
+                  ComplexMath.mul(ComplexMath.minusI, z)
+                 )
+                ), twoI
+               );
+    },
+
+    cos: function(z) {
+        // sin(c) = (e^(ic)+e^(-ic))/(2)
+        const two = new Complex(2, 0);
+        return ComplexMath.div(
+                ComplexMath.add(
+                 ComplexMath.exp(
+                  ComplexMath.mul(ComplexMath.i, z)
+                 ), ComplexMath.exp(
+                  ComplexMath.mul(ComplexMath.minusI, z)
+                 )
+                ), two
+               );
+    },
+
+    tan: function(z) {
+        return ComplexMath.sin(z).div(ComplexMath.cos(z));
+    },
+
+    asin: function(z) {
+        // asin(z) = -ilog(iz+sqrt(1-z^2))
+        return ComplexMath.mul(
+                ComplexMath.log(
+                 ComplexMath.add(
+                  ComplexMath.mul(ComplexMath.i, z),
+                  ComplexMath.sqrt(ComplexMath.sub(
+                    ComplexMath.one, z.mul(z))))),
+               ComplexMath.minusI
+               );
+    },
+
+    acos: function(z) {
+        // acos(z) = -ilog(z+isqrt(1-z^2))
+        let sq = ComplexMath.sqrt(ComplexMath.sub(ComplexMath.one, z.mul(z)));
+        return ComplexMath.mul(
+                ComplexMath.log(
+                 ComplexMath.add(z, ComplexMath.mul(z, ComplexMath.i))),
+               ComplexMath.minusI
+               );
+    },
+    
+    atan: function(z) {
+        // atan(z) = i(log(1-iz)-log(1+iz))/2
+        let lgm = ComplexMath.log(
+                    ComplexMath.sub(
+                     ComplexMath.one, 
+                     ComplexMath.mul(ComplexMath.i, z)));
+        let lgp = ComplexMath.log(
+                    ComplexMath.add(
+                     ComplexMath.one, 
+                     ComplexMath.mul(ComplexMath.i, z)));
+        return ComplexMath.mul(ComplexMath.iOverTwo, ComplexMath.sub(lgm, lgp));
+    },
+    
+    // atan2 defined for real arguments only
+    atan2: function(a, b) {
+        return new Complex(Math.atan2(a.re, b.re), 0);
+    },
+
+    sec: function(z) {
+        return ComplexMath.one.div(ComplexMath.cos(z));
+    },
+    csc: function(z) {
+        return ComplexMath.one.div(ComplexMath.sin(z));
+    },
+    cot: function(z) {
+        return ComplexMath.one.div(ComplexMath.tan(z));
+    },
+    
+    sinh: function(z) {
+        // sinh(z) = -isin(iz)
+        return ComplexMath.minusI.mul(ComplexMath.sin(ComplexMath.i.mul(z)));
+    },
+    cosh: function(z) {
+        // cosh(z) = cos(iz)
+        return ComplexMath.cos(ComplexMath.i.mul(z));
+    },
+    tanh: function(z) {
+        // tanh(z) = -itan(iz)
+        return ComplexMath.minusI.mul(ComplexMath.tan(ComplexMath.i.mul(z)));
+    },
+    
+    asinh: function(z) {
+        // asin(z) = log(z+sqrt(1+z^2))
+        return ComplexMath.log(z.add(ComplexMath.sqrt(
+                    ComplexMath.one.add(z.mul(z)))));
+    },
+
+    acosh: function(z) {
+        // acos(z) = log(z+sqrt(-1+z^2))
+        return ComplexMath.log(z.add(ComplexMath.sqrt(
+            ComplexMath.minusOne.add(z.mul(z)))));
+    },
+    
+    atanh: function(z) {
+        // atan(z) = (log(1+z)-log(1-z))/2
+        return ComplexMath.log(ComplexMath.one.add(z))
+                    .sub(ComplexMath.log(ComplexMath.one.sub(z)))
+                    .div(new Complex(2, 0));
+    },
 }

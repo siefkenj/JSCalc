@@ -17,11 +17,11 @@
  *   along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const TOKENS = { operators: { '+': true, '-': true, '*': true, '/': true, 
+const TOKENS = { operators: { '+': true, '-': true, '*': true, '/': true, '//': true,
                               '^': true, '=': true, '!': true, '==': true, 
                               '<': true, '<=': true, '>': true, '>=': true, 
-                              '!=': true, ',': true, 'atan2': true /* atan2 is characters followed by numbers, so we need to add it explictly */,
-                              'deg': true
+                              '!=': true, ',': true, 
+                              'deg': true, '%': true
                               },
                  brackets: { '(': true, ')': true, '[': true, ']': true, '{': true, '}': true } };
 
@@ -119,7 +119,6 @@ Lexer.prototype = {
         }
 
         return token;
-
     },
 
     // returns the operator in source at position pos
@@ -148,15 +147,6 @@ Lexer.prototype = {
             return match[0];
         }
         return null;
-        
-//        let start = currPos;
-//        let c = currSource.charAt(currPos);
-//        while (isDecimalDigit(c) || c === '.') {
-//            currPos++;
-//            c = currSource.charAt(currPos);
-//        }
-//
-//        return currSource.slice(start, currPos) || null;
     },
     
     // TODO: make so identifiers can be followed by numbers?
@@ -164,13 +154,11 @@ Lexer.prototype = {
         let currPos = pos || this.index || 0;
         let currSource = source || this.source;
         
-        let start = currPos;
-        let c;
-        while (isLetter(currSource.charAt(currPos))) {
-            currPos++;
+        let match = currSource.slice(currPos).match(/^[A-Za-z]\w*/);
+        if (match) {
+            return match[0];
         }
-
-        return currSource.slice(start, currPos) || null;
+        return null;
     },
 
     findMatchingBracketPos: function(pos, source) {
