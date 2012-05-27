@@ -5,20 +5,20 @@
 </head>
 
 <body>
-	<script type="text/javascript" src="lexer.js"></script>
-	<script type="text/javascript" src="parser.js"></script>
+	<script type="text/javascript;version=1.8" src="lexer.js"></script>
+	<script type="text/javascript;version=1.8" src="parser.js"></script>
 	<script type='application/javascript' src='jquery/jquery-1.6.4.js'></script>
-	<script type="text/javascript" src="bignum.js"></script>
-	<script type="text/javascript" src="calculator.js"></script>
+	<script type="text/javascript;version=1.8" src="bignum.js"></script>
+	<script type="text/javascript;version=1.8" src="calculator.js"></script>
 
-	<script type="text/javascript">
+	<script type="text/javascript;version=1.8">
 		$(document).ready(function() {
 			$('#expression').change(function() {
-				var inputType = $('#input_type option:selected').val();
-				var text = $('#expression').val();
+				let inputType = $('#input_type option:selected').val();
+				let text = $('#expression').val();
 				$('#code').text(text);
 				
-				var p = new Parser(text), parsed;
+				let p = new Parser(text), parsed;
 				if (inputType === 'standard') {
 					parsed = p.parse();
 				} else if (inputType === 'rpn') {
@@ -26,7 +26,7 @@
 				}
 				$('#parsed-data').text(''+parsed);
 				//let answer = evaluateNumeric(parsed);
-				var answer = evaluateComplexNumeric(parsed);
+				let answer = evaluateComplexNumeric(parsed);
 				$('#eval-data').text(''+answer);
 				$('#symeval-data').text(''+evaluateString(parsed));
 
